@@ -13,7 +13,7 @@ TAU = 1e-3 # for soft update from local network to taget network
 LR_ACTOR = 5e-4 # learning rate
 LR_CRITIC = 5e-4 # learning rate
 #Update frequencies
-UPDATE_CRITIC_EVERY = 1 # number of frames used to update the local network
+UPDATE_CRITIC_EVERY = 20 # number of frames used to update the local network
 UPDATE_ACTOR_TARGET = 2 * UPDATE_CRITIC_EVERY
 #Noise Parameters
 NOISE_MIN_MAX = 0.5
@@ -54,7 +54,7 @@ class AgentTD3():
         #Time step variable
         self.t_step = 0
         
-    def step(self, state, action, reward, next_state, done):
+    def step(self, states, actions, rewards, next_states, dones):
         """ Collection of experiences and learning from those experiences 
         Params
         ******
@@ -67,7 +67,8 @@ class AgentTD3():
         #Update memory
             #pdb.set_trace() - For Debugging
         self.t_step += 1
-        self.memory.add(state, action, reward, next_state, done)
+        for state, action, reward, next_state, done in zip(states, actions, rewards, next_states, dones):
+            self.memory.add(state, action, reward, next_state, done)
         #Learn every number of time steps according to variable UPDATE_EVERY
         if self.t_step % UPDATE_CRITIC_EVERY == 0:
             #Learn from enough experiences
@@ -75,7 +76,7 @@ class AgentTD3():
                 experiences = self.memory.sample()
                 self.learn(experiences, GAMMA)
 
-    def act(self, state, use_target=False, add_noise=False):
+    def act(self, states, use_target=False, add_noise=False):
         """ 
         Compute the action based on the current state vector
         The noise is implemented based on Mr. Fujimoto's concept of noise
@@ -85,24 +86,29 @@ class AgentTD3():
             use_target (Boolean): return target actions
             add_noise (Boolean): add noise to the actions 
         """
-        state = torch.from_numpy(state).float().to(device) if not torch.is_tensor(state) else state
-        self.actor_local.eval()
-        with torch.no_grad():
-            if use_target:
-                action_values = self.actor_target(state).cpu().data.numpy().astype('float64')
-            else:
-                action_values = self.actor_local(state).cpu().data.numpy().astype('float64')
+        actions = np.array([])
+        for idx, state in enumerate(states):
+            state = torch.from_numpy(state).float().to(device) if not torch.is_tensor(state) else state
+            self.actor_local.eval()
+            with torch.no_grad():
+                if use_target:
+                    action_values = self.actor_target(state).cpu().data.numpy().astype('float64')
+                else:
+                    action_values = self.actor_local(state).cpu().data.numpy().astype('float64')
+                #pdb.set_trace()
+            self.actor_local.train()
             #pdb.set_trace()
-        self.actor_local.train()
-        #pdb.set_trace()
-        # Add noise to the action vector
-        if add_noise:
-            noise = np.clip(np.random.random_sample(action_values.shape), -NOISE_MIN_MAX, NOISE_MIN_MAX)
-            action_values = np.clip(action_values + noise, -1, 1)
-        else:
-            action_values = np.clip(action_values, -1, 1)
+            # Add noise to the action vector
+            if add_noise:
+                noise = np.clip(np.random.random_sample(action_values.shape), -NOISE_MIN_MAX, NOISE_MIN_MAX)
+                action_values = np.clip(action_values + noise, -1, 1)
+            else:
+                action_values = np.clip(action_values, -1, 1)
+            
+            actions = np.append(actions, action_values)
 
-        return action_values
+        #pdb.set_trace()
+        return np.reshape(actions,(states.shape[0], 4))
         
     def learn(self, experiences, gamma):
         """ 
@@ -112,42 +118,44 @@ class AgentTD3():
             experiences (Pytorch Tensor Tuple): Experience tuple - (state, action, reward, next_state, done)
             gamma (float): Q learning discount factor
         """
-        states, actions, rewards, next_states, dones = experiences
+        for update_idx in range(0,10):
 
-        # ------------------------------- Update Critic Network ---------------------------------------------- #
-        #Adding noise to the target actions
-        actions_next = self.act(next_states, use_target=True, add_noise=True)
-        actions_next = torch.from_numpy(actions_next).float().to(device)
-        # Compute Target Q Values
-        Q1_Target, Q2_Target = self.critic_target(next_states, actions_next)
-        Q_Target_next = torch.min(Q1_Target, Q2_Target)
-        Q_Targets = rewards + (gamma * Q_Target_next * (1 - dones))
-        
-        #Expected Q values from local network
-        Q_expected = self.critic_local.Q1(states, actions)
-        
-        #Compute the loss
-        loss = F.mse_loss(Q_expected, Q_Targets)
-        #Minimize the loss
-        #pdb.set_trace()
-        self.critic_optimizer.zero_grad()
-        loss.backward()
-        self.critic_optimizer.step()
-
-        # ------------------------------- Update Local Actor and Target Networks ------------------------------ #
-        if self.t_step % UPDATE_ACTOR_TARGET == 0:
-            #Update local actor network !
-            actions_pred = self.actor_local(states)
-            actor_loss = -self.critic_local.Q1(states, actions_pred).mean()
+            states, actions, rewards, next_states, dones = experiences
+            #db.set_trace()
+            # ------------------------------- Update Critic Network ---------------------------------------------- #
+            #Adding noise to the target actions
+            actions_next = self.act(next_states, use_target=True, add_noise=True)
+            actions_next = torch.from_numpy(actions_next).float().to(device)
+            # Compute Target Q Values
+            Q1_Target, Q2_Target = self.critic_target(next_states, actions_next)
+            Q_Target_next = torch.min(Q1_Target, Q2_Target)
+            Q_Targets = rewards + (gamma * Q_Target_next * (1 - dones))
+            
+            #Expected Q values from local network
+            Q_expected = self.critic_local.Q1(states, actions)
+            
+            #Compute the loss
+            loss = F.mse_loss(Q_expected, Q_Targets)
             #Minimize the loss
-            self.actor_optimizer.zero_grad()
-            actor_loss.backward()
-            self.actor_optimizer.step()
+            #pdb.set_trace()
+            self.critic_optimizer.zero_grad()
+            loss.backward()
+            self.critic_optimizer.step()
 
-            #Slow annealing of target network w.r.t local network
-            self.soft_update(self.actor_local, self.actor_target, TAU)
-            #Update Frozen Target Critic Network
-            self.soft_update(self.critic_local, self.critic_target, TAU)
+            # ------------------------------- Update Local Actor and Target Networks ------------------------------ #
+            if update_idx % 2 == 0:
+                #Update local actor network !
+                actions_pred = self.actor_local(states)
+                actor_loss = -self.critic_local.Q1(states, actions_pred).mean()
+                #Minimize the loss
+                self.actor_optimizer.zero_grad()
+                actor_loss.backward()
+                self.actor_optimizer.step()
+
+                #Slow annealing of target network w.r.t local network
+                self.soft_update(self.actor_local, self.actor_target, TAU)
+                #Update Frozen Target Critic Network
+                self.soft_update(self.critic_local, self.critic_target, TAU)
     
     def soft_update(self, local_model, target_model, tau):
         """ Soft annealing of the target network weights w.r.t to the local network weights
