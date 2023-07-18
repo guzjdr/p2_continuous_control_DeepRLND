@@ -15,10 +15,10 @@ LR_CRITIC = 5e-4 # learning rate
 #Update frequencies
 UPDATE_CRITIC_EVERY = 10 # number of frames used to update the local network
 UPDATE_ACTOR_TARGET = 2 * UPDATE_CRITIC_EVERY
-NN_NUM_UPDATES = 6
+NN_NUM_UPDATES = 10
 
 #Noise Parameters
-NOISE_FACTOR = 0.4
+NOISE_FACTOR = 0.2
 NOISE_MIN_MAX = 0.5
 
 class AgentTD3():
