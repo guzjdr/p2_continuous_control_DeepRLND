@@ -13,9 +13,12 @@ TAU = 1e-3 # for soft update from local network to taget network
 LR_ACTOR = 5e-4 # learning rate
 LR_CRITIC = 5e-4 # learning rate
 #Update frequencies
-UPDATE_CRITIC_EVERY = 20 # number of frames used to update the local network
+UPDATE_CRITIC_EVERY = 10 # number of frames used to update the local network
 UPDATE_ACTOR_TARGET = 2 * UPDATE_CRITIC_EVERY
+NN_NUM_UPDATES = 6
+
 #Noise Parameters
+NOISE_FACTOR = 0.4
 NOISE_MIN_MAX = 0.5
 
 class AgentTD3():
@@ -100,7 +103,7 @@ class AgentTD3():
             #pdb.set_trace()
             # Add noise to the action vector
             if add_noise:
-                noise = np.clip(np.random.random_sample(action_values.shape), -NOISE_MIN_MAX, NOISE_MIN_MAX)
+                noise = np.clip(np.random.random_sample(action_values.shape) * NOISE_FACTOR, -NOISE_MIN_MAX, NOISE_MIN_MAX)
                 action_values = np.clip(action_values + noise, -1, 1)
             else:
                 action_values = np.clip(action_values, -1, 1)
@@ -118,7 +121,7 @@ class AgentTD3():
             experiences (Pytorch Tensor Tuple): Experience tuple - (state, action, reward, next_state, done)
             gamma (float): Q learning discount factor
         """
-        for update_idx in range(0,10):
+        for update_idx in range(0,NN_NUM_UPDATES):
 
             states, actions, rewards, next_states, dones = experiences
             #db.set_trace()
