@@ -18,7 +18,7 @@ UPDATE_ACTOR_TARGET = 2 * UPDATE_CRITIC_EVERY
 NN_NUM_UPDATES = 10
 
 #Noise Parameters
-NOISE_FACTOR = 0.2
+NOISE_FACTOR = 0.8
 NOISE_MIN_MAX = 0.5
 
 class AgentTD3():
@@ -135,10 +135,10 @@ class AgentTD3():
             Q_Targets = rewards + (gamma * Q_Target_next * (1 - dones))
             
             #Expected Q values from local network
-            Q_expected = self.critic_local.Q1(states, actions)
-            
+            Q1_expected, Q2_expected = self.critic_local(states, actions)
+
             #Compute the loss
-            loss = F.mse_loss(Q_expected, Q_Targets)
+            loss = F.mse_loss(Q1_expected, Q_Targets) + F.mse_loss(Q2_expected, Q_Targets)
             #Minimize the loss
             #pdb.set_trace()
             self.critic_optimizer.zero_grad()
