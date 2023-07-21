@@ -1,3 +1,6 @@
+[//]: # (Image References)
+[image1]: data_files/exp0_mutli_agent_training.png "Multi_Agent_Training"
+
 # Project2: Continuous Control ( Deep RL NanoDegree )
 
 This repository contains material related to Udacity's [Deep Reinforcement Learning Nanodegree](https://www.udacity.com/course/deep-reinforcement-learning-nanodegree--nd893) program. 
@@ -7,17 +10,17 @@ This repository contains material related to Udacity's [Deep Reinforcement Learn
 Implemented the Twin Delay DDPG ( TD3 ) Algorithm to solve the task provided. 
 
 Task:
-    - Implement the TD3 Algorithm to control the two link arm reacher ( unity environment ).
-    - The agent is able to receive an average reward of +13 (or higher) over a 100 episode epoch.
+- Implement the TD3 Algorithm to control the two link arm reacher ( unity environment ).
+- The agent is able to receive an average reward of +13 (or higher) over a 100 episode epoch.
 
 
 ## Environment
 
 Unity Reacher Environment - Used to train an agent to solve the task described above. The main idea is to train an agent to learn to move to target locations within the environment. 
-[image1]: ./data_files/exp0_mutli_agent_training.png "Multi_Agent_Training"
 
-![alt text][image1]<center>**Unity Reacher Multi-Agent-Environment**</center>
+<b>**Unity Reacher Multi-Agent-Environment**</cebnter>
 
+![alt text][image1] 
 
 ## Getting Started 
 
