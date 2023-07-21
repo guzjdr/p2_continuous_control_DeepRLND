@@ -4,14 +4,19 @@ This repository contains material related to Udacity's [Deep Reinforcement Learn
 
 ## Project Description
 
-Implemented the TD3 Algorithm to solve the task provided. 
+Implemented the Twin Delay DDPG ( TD3 ) Algorithm to solve the task provided. 
 
 Task:
-    - TBD
+    - Implement the TD3 Algorithm to control the two link arm reacher ( unity environment ).
+    - The agent is able to receive an average reward of +13 (or higher) over a 100 episode epoch.
 
 
 ## Environment
 
+Unity Reacher Environment - Used to train an agent to solve the task described above. The main idea is to train an agent to learn to move to target locations within the environment. 
+[image1]: ./data_files/exp0_mutli_agent_training.png "Multi_Agent_Training"
+
+![alt text][image1]<center>**Unity Reacher Multi-Agent-Environment**</center>
 
 
 ## Getting Started 
@@ -57,4 +62,5 @@ pip install .
 ```bash
 python -m ipykernel install --user --name drlnd --display-name "drlnd"
 ```
-* Download the . . . 
+* Download the Unity Environment(s):
+Please refer to this repo to download the environment files: [p2_continuous-control](https://github.com/udacity/deep-reinforcement-learning/tree/master/p2_continuous-control)
